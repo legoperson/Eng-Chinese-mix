@@ -1,9 +1,8 @@
-import os
 from typing import List
 
 import streamlit as st
 
-from main import DEFAULT_API_KEY, DEFAULT_MODEL, run_workflow
+from main import API_KEY_SHORTCUT, DEFAULT_API_KEY, DEFAULT_MODEL, run_workflow
 
 
 SENTENCE_OPTIONS = {
@@ -118,7 +117,7 @@ def app() -> None:
             "Gemini / Gemma API Key",
             value="",
             type="password",
-            placeholder="Paste API key here or use GEMINI_API_KEY env var",
+            placeholder=f"Paste API key here, or enter {API_KEY_SHORTCUT} to use your default key",
         )
         model = st.text_input("Model", value=DEFAULT_MODEL)
         sentence_preset = st.select_slider(
@@ -159,9 +158,9 @@ def app() -> None:
     def ui_log(message: str) -> None:
         logs.append(message)
 
-    effective_api_key = api_key or os.getenv("GEMINI_API_KEY", DEFAULT_API_KEY)
+    effective_api_key = DEFAULT_API_KEY if api_key == API_KEY_SHORTCUT else api_key
     if not effective_api_key:
-        st.error("Missing API key. Enter it in the sidebar or set GEMINI_API_KEY.")
+        st.error(f"Missing API key. Enter your API key, or type {API_KEY_SHORTCUT} to use the default key.")
         return
 
     preset = SENTENCE_OPTIONS[sentence_preset]

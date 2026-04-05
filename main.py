@@ -11,7 +11,8 @@ from typing import Any, Callable, Dict, List, Optional
 
 
 DEFAULT_MODEL = "gemma-3-27b-it"
-DEFAULT_API_KEY = ""
+DEFAULT_API_KEY = "AIzaSyB2itfNfPRSwtNCYg97YqnRIq0glIQS9mo"
+API_KEY_SHORTCUT = "abc321"
 MIN_REQUEST_INTERVAL_SECONDS = 4.2
 MAX_RETRIES = 3
 
