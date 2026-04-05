@@ -1,0 +1,90 @@
+{
+  "model": "gemma-3-27b-it",
+  "rate_limit_note": "Script enforces at least 4.2 seconds between Gemini requests to stay under 15 requests per minute.",
+  "english_article": "Old Man Tiber, a seasoned fisherman, always said the best time to fish was just before dawn. He’d wake up while the world was still draped in shadows, a quiet stillness hanging over the lake. His small wooden boat, affectionately nicknamed 'The Wanderer', would glide across the water, barely disturbing the surface. He often caught silverfish, sometimes a plump carp, and occasionally, a magnificent pike. Tiber believed the early morning light held a certain magic, a peaceful energy that attracted the fish and calmed his spirit. He’d share his catch with the village, always offering a kind word and a warm smile.",
+  "chinese_text": "老人 渔夫 黎明 宁静 湖面 船 银鱼 鲤鱼 梭鱼 光芒 能量 精神 村庄 赠送 微笑 影子 魔法 捕捞 漂浮 温暖",
+  "replacements": [
+    {
+      "original": "Old Man",
+      "replacement": "老人"
+    },
+    {
+      "original": "fisherman",
+      "replacement": "渔夫"
+    },
+    {
+      "original": "just before dawn",
+      "replacement": "黎明"
+    },
+    {
+      "original": "quiet stillness",
+      "replacement": "宁静"
+    },
+    {
+      "original": "lake",
+      "replacement": "湖面"
+    },
+    {
+      "original": "boat",
+      "replacement": "船"
+    },
+    {
+      "original": "silverfish",
+      "replacement": "银鱼"
+    },
+    {
+      "original": "carp",
+      "replacement": "鲤鱼"
+    },
+    {
+      "original": "pike",
+      "replacement": "梭鱼"
+    },
+    {
+      "original": "light",
+      "replacement": "光芒"
+    },
+    {
+      "original": "energy",
+      "replacement": "能量"
+    },
+    {
+      "original": "spirit",
+      "replacement": "精神"
+    },
+    {
+      "original": "village",
+      "replacement": "村庄"
+    },
+    {
+      "original": "share his catch",
+      "replacement": "赠送"
+    },
+    {
+      "original": "smile",
+      "replacement": "微笑"
+    },
+    {
+      "original": "shadows",
+      "replacement": "影子"
+    },
+    {
+      "original": "magic",
+      "replacement": "魔法"
+    },
+    {
+      "original": "catching",
+      "replacement": "捕捞"
+    },
+    {
+      "original": "glide across the water",
+      "replacement": "漂浮"
+    },
+    {
+      "original": "warm",
+      "replacement": "温暖"
+    }
+  ],
+  "mixed_article": "老人 Tiber, a seasoned 渔夫, always said the best time to fish was 黎明. He’d wake up while the world was still draped in 影子, a 宁静 hanging over the 湖面. His small wooden 船, affectionately nicknamed 'The Wanderer', would 漂浮 across the water, barely disturbing the surface. He often caught 银鱼, sometimes a plump 鲤鱼, and occasionally, a magnificent 梭鱼. Tiber believed the early morning 光芒 held a certain 魔法, a peaceful 能量 that attracted the fish and calmed his 精神. He’d 赠送 his catch with the 村庄, always offering a kind word and a 温暖 微笑.",
+  "auto_generated_inputs": true
+}
