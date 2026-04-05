@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 
 DEFAULT_MODEL = "gemma-3-27b-it"
-DEFAULT_API_KEY = "AIzaSyB2itfNfPRSwtNCYg97YqnRIq0glIQS9mo"
+DEFAULT_API_KEY = ""
 MIN_REQUEST_INTERVAL_SECONDS = 4.2
 MAX_RETRIES = 3
 
@@ -148,24 +148,73 @@ class GeminiClient:
         return not self.model.startswith("gemma-")
 
 
-def build_generation_prompt() -> str:
-    return """
+def build_generation_prompt(sentence_count: int, article_length: str, chinese_difficulty: str) -> str:
+    return f"""
 你要生成测试用材料，并且只返回 JSON。
 
 任务：
-1. 生成一段 120 到 180 词的自然英文短文，内容轻松、具体、适合做替换实验，至少 4 到 5 句话。
+1. 生成一段自然英文短文，内容轻松、具体、适合做替换实验。
 2. 再生成一组中文字符或短词，数量 10 到 20 个，适合替换英文里的部分含义。
 
 严格要求：
 - 只输出 JSON，不要 markdown，不要解释。
 - JSON 结构必须是：
-{
+{{
   "english_article": "...",
   "chinese_text": "..."
-}
+}}
 - chinese_text 用空格分隔中文字符或短词。
-- english_article 必须至少有 4 句，最好 5 句。
+- english_article 的长度要求：{article_length}。
+- english_article 必须至少有 {sentence_count} 句。
+- chinese_text 的难度要求：{chinese_difficulty}。
 - 英文文章里要包含尽量多的可被这些中文字符或短词表达的意思。
+""".strip()
+
+
+def build_english_only_prompt(chinese_text: str, sentence_count: int, article_length: str) -> str:
+    return f"""
+你要根据给定的中文词，生成一段适合做中英混写的英文文章，并且只返回 JSON。
+
+可用中文字符或短词：
+{chinese_text}
+
+任务：
+1. 生成一段自然、连贯、好读的英文短文。
+2. 英文内容要尽量包含可以被这些中文词自然替换的单词或短语。
+
+严格要求：
+- 只输出 JSON，不要 markdown，不要解释。
+- JSON 结构必须是：
+{{
+  "english_article": "..."
+}}
+- 文章长度要求：{article_length}。
+- 句子数量要求：至少 {sentence_count} 句。
+- 语气自然，不要像词表拼接出来的句子。
+""".strip()
+
+
+def build_chinese_only_prompt(english_article: str, difficulty: str) -> str:
+    return f"""
+你要根据给定的英文文章，生成一组适合替换其中部分内容的中文词，并且只返回 JSON。
+
+英文文章：
+{english_article}
+
+任务：
+1. 挑选文章里适合被中文替换的核心词或短语。
+2. 生成一组中文字符或短词，方便后续做中英混写。
+
+严格要求：
+- 只输出 JSON，不要 markdown，不要解释。
+- JSON 结构必须是：
+{{
+  "chinese_text": "..."
+}}
+- 中文难度要求：{difficulty}。
+- 输出 10 到 20 个中文字符或短词。
+- 用空格分隔。
+- 优先选择能让最终文章读起来比较自然的词，不要只挑生硬、零碎的词。
 """.strip()
 
 
@@ -182,12 +231,14 @@ def build_mix_prompt(english_article: str, chinese_text: str) -> str:
 任务：
 1. 找出英文文章中，哪些单词或短语的含义可以直接用上面提供的中文字符或短词表达。
 2. 只替换那些自然、明显、不会严重破坏可读性的部分。
-3. 生成一篇混合后的文章，保留整体英文语序，但局部替换成中文。
+3. 生成一篇混合后的文章，优先保证整段读起来通顺自然，而不是机械地多替换。
+4. 可以对个别词位做轻微调整，让句子更像真实的人写的中英混合表达，但不要改变原文主要意思。
 
 严格要求：
 - 只能使用“可用中文字符或短词”里已经给出的中文，不要发明新的中文。
 - 如果某个中文短词更适合替换短语，可以直接替换整个短语。
 - 替换不要过度，保持文章仍然主要是英文。
+- 最终 mixed_article 要比“逐词硬替换”更自然，避免明显别扭的表达。
 - 只输出 JSON，不要 markdown，不要解释。
 - JSON 结构必须是：
 {{
@@ -223,6 +274,9 @@ def run_workflow(
     model: str,
     english_article: Optional[str] = None,
     chinese_text: Optional[str] = None,
+    sentence_count: int = 5,
+    article_length: str = "140 到 220 词",
+    chinese_difficulty: str = "中等，适合中级中文学习者",
     logger: Logger = None,
 ) -> Dict[str, Any]:
     active_logger = logger or log
@@ -235,11 +289,27 @@ def run_workflow(
 
     generated_inputs: Dict[str, Any] = {}
 
-    if not english_article or not chinese_text:
-        active_logger("未提供完整输入，先自动生成测试英文和中文素材")
-        generated_inputs = client.generate_json(build_generation_prompt())
-        english_article = english_article or generated_inputs["english_article"]
-        chinese_text = chinese_text or generated_inputs["chinese_text"]
+    if not english_article and not chinese_text:
+        active_logger("未提供英文和中文，先自动生成整套测试素材")
+        generated_inputs = client.generate_json(
+            build_generation_prompt(sentence_count, article_length, chinese_difficulty)
+        )
+        english_article = generated_inputs["english_article"]
+        chinese_text = generated_inputs["chinese_text"]
+    elif not english_article:
+        active_logger("未提供英文，正在根据你给的中文生成英文文章")
+        generated_english = client.generate_json(
+            build_english_only_prompt(chinese_text or "", sentence_count, article_length)
+        )
+        english_article = generated_english["english_article"]
+        generated_inputs["english_article"] = english_article
+    elif not chinese_text:
+        active_logger("未提供中文，正在根据你给的英文生成中文词")
+        generated_chinese = client.generate_json(
+            build_chinese_only_prompt(english_article, chinese_difficulty)
+        )
+        chinese_text = generated_chinese["chinese_text"]
+        generated_inputs["chinese_text"] = chinese_text
     else:
         active_logger("检测到你已提供英文和中文素材，跳过自动生成步骤")
 
@@ -260,6 +330,8 @@ def run_workflow(
 def main() -> int:
     args = parse_args()
     log("脚本启动")
+    if not args.api_key:
+        raise RuntimeError("Missing API key. Set GEMINI_API_KEY or pass --api-key.")
     final_result = run_workflow(
         api_key=args.api_key,
         model=args.model,
@@ -273,10 +345,10 @@ def main() -> int:
     log(f"结果已保存到 {args.save_json}")
 
     print("=== English Article ===")
-    print(english_article)
+    print(final_result["english_article"])
     print()
     print("=== Chinese Text ===")
-    print(chinese_text)
+    print(final_result["chinese_text"])
     print()
     print("=== Replacements ===")
     for item in final_result["replacements"]:

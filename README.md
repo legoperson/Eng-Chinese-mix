@@ -26,4 +26,5 @@ python3 main.py
 
 - The app defaults to `gemma-3-27b-it`.
 - You can provide your API key in the sidebar or via the `GEMINI_API_KEY` environment variable.
+- The app does not prefill or display your API key.
 - The workflow enforces at least 4.2 seconds between requests to stay under 15 requests per minute.
