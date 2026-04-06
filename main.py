@@ -11,8 +11,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 
 DEFAULT_MODEL = "gemma-3-27b-it"
-DEFAULT_API_KEY = "AIzaSyB2itfNfPRSwtNCYg97YqnRIq0glIQS9mo"
-API_KEY_SHORTCUT = "abc321"
+DEFAULT_API_KEY = ""
 MIN_REQUEST_INTERVAL_SECONDS = 4.2
 MAX_RETRIES = 3
 
@@ -215,6 +214,8 @@ def build_chinese_only_prompt(english_article: str, difficulty: str) -> str:
 - 中文难度要求：{difficulty}。
 - 输出 10 到 20 个中文字符或短词。
 - 用空格分隔。
+- 优先选择名词、动词、形容词、清晰主语、地点、具体事物、明显动作、明显状态。
+- 尽量不要选择冠词、介词、连词、代词碎片、语气词、功能词。
 - 优先选择能让最终文章读起来比较自然的词，不要只挑生硬、零碎的词。
 """.strip()
 
@@ -231,15 +232,18 @@ def build_mix_prompt(english_article: str, chinese_text: str) -> str:
 
 任务：
 1. 找出英文文章中，哪些单词或短语的含义可以直接用上面提供的中文字符或短词表达。
-2. 只替换那些自然、明显、不会严重破坏可读性的部分。
-3. 生成一篇混合后的文章，优先保证整段读起来通顺自然，而不是机械地多替换。
-4. 可以对个别词位做轻微调整，让句子更像真实的人写的中英混合表达，但不要改变原文主要意思。
+2. 优先替换名词、动词、形容词、清晰主语，以及地点、具体事物、明显动作、明显状态。
+3. 只替换那些自然、明显、不会严重破坏可读性的部分。
+4. 尽量不要替换冠词、介词、连词、代词碎片或其他功能词，除非非常自然。
+5. 生成一篇混合后的文章，优先保证整段读起来通顺自然，而不是机械地多替换。
+6. 可以对个别词位做轻微调整，让句子更像真实的人写的中英混合表达，但不要改变原文主要意思。
 
 严格要求：
 - 只能使用“可用中文字符或短词”里已经给出的中文，不要发明新的中文。
 - 如果某个中文短词更适合替换短语，可以直接替换整个短语。
 - 替换不要过度，保持文章仍然主要是英文。
 - 最终 mixed_article 要比“逐词硬替换”更自然，避免明显别扭的表达。
+- `replacements` 里优先列出名词、动词、形容词、主语相关替换，不要塞满零碎功能词。
 - 只输出 JSON，不要 markdown，不要解释。
 - JSON 结构必须是：
 {{
