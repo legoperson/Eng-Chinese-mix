@@ -340,6 +340,12 @@ def app() -> None:
             )
             st.caption("Get an API key from your Gemini account. A free API key is enough. Paste it here and you can start.")
             model = st.text_input("Model", value=DEFAULT_MODEL)
+            story_theme = st.text_input(
+                "Story Theme",
+                value="school, friendship, animals, family, food, travel, simple adventure",
+                placeholder="Examples: space trip, school day, friendly dragon, rainy picnic, zoo adventure",
+            )
+            st.caption("Use this to change the story direction and avoid repeated openings or repeated character types.")
             sentence_preset = st.select_slider(
                 "Sentence Length",
                 options=list(SENTENCE_OPTIONS.keys()),
@@ -437,6 +443,7 @@ def app() -> None:
                 sentence_count=preset["sentence_count"],
                 article_length=preset["article_length"],
                 chinese_difficulty=chinese_difficulty,
+                story_theme=story_theme.strip() or "daily life, school, family, friendship, animals, or simple adventure",
                 logger=ui_log,
             )
     except Exception as exc:

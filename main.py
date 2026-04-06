@@ -148,7 +148,12 @@ class GeminiClient:
         return not self.model.startswith("gemma-")
 
 
-def build_generation_prompt(sentence_count: int, article_length: str, chinese_difficulty: str) -> str:
+def build_generation_prompt(
+    sentence_count: int,
+    article_length: str,
+    chinese_difficulty: str,
+    story_theme: str,
+) -> str:
     return f"""
 你要生成测试用材料，并且只返回 JSON。
 
@@ -167,11 +172,18 @@ def build_generation_prompt(sentence_count: int, article_length: str, chinese_di
 - english_article 的长度要求：{article_length}。
 - english_article 必须至少有 {sentence_count} 句。
 - chinese_text 的难度要求：{chinese_difficulty}。
+- 故事题材或场景：{story_theme}。
+- 不要总是重复使用同一个人物名、同一种开头或同一种叙事模板。
 - 英文文章里要包含尽量多的可被这些中文字符或短词表达的意思。
 """.strip()
 
 
-def build_english_only_prompt(chinese_text: str, sentence_count: int, article_length: str) -> str:
+def build_english_only_prompt(
+    chinese_text: str,
+    sentence_count: int,
+    article_length: str,
+    story_theme: str,
+) -> str:
     return f"""
 你要根据给定的中文词，生成一段适合做中英混写的英文文章，并且只返回 JSON。
 
@@ -190,6 +202,8 @@ def build_english_only_prompt(chinese_text: str, sentence_count: int, article_le
 }}
 - 文章长度要求：{article_length}。
 - 句子数量要求：至少 {sentence_count} 句。
+- 故事题材或场景：{story_theme}。
+- 不要总是重复使用同一个人物名、同一种开头或同一种叙事模板。
 - 语气自然，不要像词表拼接出来的句子。
 """.strip()
 
@@ -282,6 +296,7 @@ def run_workflow(
     sentence_count: int = 5,
     article_length: str = "140 到 220 词",
     chinese_difficulty: str = "中等，适合中级中文学习者",
+    story_theme: str = "daily life, school, family, friendship, animals, or simple adventure",
     logger: Logger = None,
 ) -> Dict[str, Any]:
     active_logger = logger or log
@@ -297,14 +312,14 @@ def run_workflow(
     if not english_article and not chinese_text:
         active_logger("未提供英文和中文，先自动生成整套测试素材")
         generated_inputs = client.generate_json(
-            build_generation_prompt(sentence_count, article_length, chinese_difficulty)
+            build_generation_prompt(sentence_count, article_length, chinese_difficulty, story_theme)
         )
         english_article = generated_inputs["english_article"]
         chinese_text = generated_inputs["chinese_text"]
     elif not english_article:
         active_logger("未提供英文，正在根据你给的中文生成英文文章")
         generated_english = client.generate_json(
-            build_english_only_prompt(chinese_text or "", sentence_count, article_length)
+            build_english_only_prompt(chinese_text or "", sentence_count, article_length, story_theme)
         )
         english_article = generated_english["english_article"]
         generated_inputs["english_article"] = english_article
